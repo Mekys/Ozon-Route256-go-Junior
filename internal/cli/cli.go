@@ -4,11 +4,15 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"homework-3/internal/app/answer"
+	"homework-3/internal/kafka"
 	"homework-3/internal/models"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Module interface {
@@ -28,6 +32,10 @@ type CLI struct {
 	Deps
 	commandList []command
 }
+
+var (
+	brokers = []string{"127.0.0.1:9091"}
+)
 
 // NewCLI creates a command line interface
 func NewCLI(d Deps) CLI {
@@ -77,27 +85,46 @@ func (c CLI) Run(text string) error {
 		fmt.Println("command isn't set")
 		return fmt.Errorf("command isn't set help")
 	}
+	operationId := uuid.New().String()
 
 	commandName := args[0]
 	switch commandName {
 	case help:
+		Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: true})
+		defer Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: false})
 		c.help()
 		return nil
 	case addOrder:
+		Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: true})
+		defer Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: false})
 		return c.addOrder(args[1:])
 	case returnToDeliverer:
+		Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: true})
+		defer Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: false})
 		return c.ReturnToDeliverer(args[1:])
 	case returnFromAddressee:
+		Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: true})
+		defer Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: false})
 		return c.ReturnFromAddressee(args[1:])
 	case listRefund:
+		Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: true})
+		defer Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: false})
 		return c.PrintRefund(args[1:])
 	case listOrder:
+		Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: true})
+		defer Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: false})
 		return c.PrintOrder(args[1:])
 	case giveToAddressee:
+		Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: true})
+		defer Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: false})
 		return c.DispatchOrders(args[1:])
 	case exit:
+		Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: true})
+		defer Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: commandName, IsStart: false})
 		os.Exit(1)
 	}
+	Produce(brokers, &answer.CommandMessage{Id: operationId, CreatedAt: time.Now(), Command: text, CommandName: "Undefined", IsStart: true})
+
 	return fmt.Errorf("command isn't set")
 }
 
@@ -256,4 +283,17 @@ func (c CLI) help() {
 		fmt.Println("", cmd.name, cmd.description)
 	}
 	return
+}
+
+func Produce(brokers []string, payment *answer.CommandMessage) error {
+	kafkaProducer, err := kafka.NewProducer(brokers)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	producer := answer.NewKafkaSender(kafkaProducer, "logs")
+	producer.SendAsyncMessage(payment)
+
+	return nil
 }
