@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package order;
+
+option go_package = ".order";
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto"; // openapiv2 спецификация
+import "validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+
+
+
+service Order {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {
+    description: "Order service example"
+  };
+  rpc AddOrder(AddOrderRequest) returns (google.protobuf.Empty);
+
+  rpc ReturnToDeliverer(ReturnToDelivererRequest) returns (google.protobuf.Empty);
+
+  rpc ListOrder(ListOrderRequest) returns (ListOrderResponse);
+
+  rpc GiveToAddressee(GiveToAddresseeRequest) returns (google.protobuf.Empty);
+
+  rpc ReturnFromAddressee(ReturnFromAddresseeRequest) returns (google.protobuf.Empty);
+
+  rpc ListRefund(ListRefundRequest) returns (ListRefundResponse);
+
+}
+
+
+
+
+message AddOrderRequest{
+  int64 OrderId = 1;
+  int64 AddresseeId = 2;
+  optional int64 Weight = 3;
+  optional int64 Price = 4;
+  optional int64 WrapType = 5;
+  google.protobuf.Timestamp ShelfLife = 6;
+}
+
+message ReturnToDelivererRequest {
+  int64 OrderId = 1;
+}
+message GiveToAddresseeRequest {
+  int64 OrderId = 1;
+  int64 AddresseeId = 2;
+}
+message ListRefundRequest {
+  optional int64 PageLen = 1;
+  optional int64 PageNumber = 2;
+}
+
+message ListOrderRequest {
+  int64 ClientId = 1;
+  optional int64 CountOrders = 2;
+}
+
+message ReturnFromAddresseeRequest {
+  repeated int64 OrderIds = 1;
+}
+
+message ListOrderResponse {
+  repeated string Orders = 1;
+}
+
+message ListRefundResponse {
+  repeated string Refunds = 1;
+}
+
+
+
