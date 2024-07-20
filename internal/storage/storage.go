@@ -106,7 +106,7 @@ func (s Storage) UpdateOrderStatus(orderId models.OrderId, newStatus OrderStatus
 		return err
 	}
 
-	var order []orderRecord
+	var order []Order
 	err = pgxscan.Select(context.Background(), s.p, &order, rawQuery, args...)
 	if err != nil {
 		return err
@@ -193,7 +193,7 @@ func (s Storage) GetAddresseeIds(orderIds map[models.OrderId]interface{}) (map[m
 		return nil, err
 	}
 
-	var records []orderRecord
+	var records []Order
 
 	err = pgxscan.Select(context.Background(), s.p, &records, rawQuery, args...)
 	orderIdsGroupByAddresseeId := make(map[models.AddresseeId][]models.OrderId)

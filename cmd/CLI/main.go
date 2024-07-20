@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"homework-3/internal/app/answer"
 	"homework-3/internal/app/command"
+	"homework-3/internal/cache"
 	"homework-3/internal/cli"
 	"homework-3/internal/kafka"
 	"homework-3/internal/module"
@@ -18,6 +19,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -62,6 +64,7 @@ func main() {
 	storageJSON := storage.NewStorage(pool)
 	phoneBookService := module.NewModule(module.Deps{
 		Storage: storageJSON,
+		Cache:   cache.NewOrderContacts(time.Hour),
 	})
 	commands = cli.NewCLI(cli.Deps{Module: phoneBookService})
 

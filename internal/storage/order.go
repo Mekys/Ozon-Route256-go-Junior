@@ -19,7 +19,7 @@ const (
 	ReturnFromAddresseeExpiration = 1 // Принят возврат то клиента
 )
 
-type orderRecord struct {
+type Order struct {
 	OrderId       models.OrderId     `json:"orderId" db:"orderid"`         // ID заказа
 	AddresseeId   models.AddresseeId `json:"addresseeId" db:"addresseeid"` // ID получателя
 	ShelfLife     time.Time          `json:"shelfLife" db:"shelflife"`     // Срок хранения заказа
@@ -30,7 +30,7 @@ type orderRecord struct {
 	Price         int                `json:"price" db:"price"`
 }
 
-func (t orderRecord) toDomain() models.Order {
+func (t Order) toDomain() models.Order {
 	return models.Order{
 		OrderId:     t.OrderId,
 		AddresseeId: t.AddresseeId,
@@ -40,8 +40,8 @@ func (t orderRecord) toDomain() models.Order {
 	}
 }
 
-func transform(order models.Order) orderRecord {
-	return orderRecord{
+func transform(order models.Order) Order {
+	return Order{
 		Status:        InStock,
 		OrderId:       order.OrderId,
 		ShelfLife:     order.ShelfLife,
@@ -53,7 +53,7 @@ func transform(order models.Order) orderRecord {
 	}
 }
 
-func (t *orderRecord) UpdateStatus(newStatus OrderStatus) error {
+func (t *Order) UpdateStatus(newStatus OrderStatus) error {
 	switch newStatus {
 	case ReturnToDeliverer:
 		switch t.Status {
